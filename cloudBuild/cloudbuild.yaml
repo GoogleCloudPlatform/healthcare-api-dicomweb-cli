@@ -1,0 +1,4 @@
+steps:
+- name: "docker.io/library/python:3.6"
+  args: ['bash', './cloudBuild/runTestsAndBuild.sh']
+
