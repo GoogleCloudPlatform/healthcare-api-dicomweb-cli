@@ -21,12 +21,20 @@ setuptools.setup(
     long_description_content_type="text/markdown",
 
     entry_points={
-        'console_scripts': ['dcmweb=dcmweb.place_holder:main'],
+        'console_scripts': ['dcmweb=dcmweb.command_line:main'],
     },
 
     url="https://github.com/GoogleCloudPlatform/healthcare-api-dicomweb-cli",
 
     packages=setuptools.find_packages(),
+
+    install_requires=[
+        'fire',
+        'google.auth',
+        'requests',
+        'validators',
+        'requests_toolbelt'
+    ],
 
     classifiers=[
 
@@ -38,6 +46,6 @@ setuptools.setup(
 
     ],
 
-    python_requires='>=3.6',
+    python_requires='>=3.5',
 
 )
