@@ -59,6 +59,20 @@ class Requests:
 
         return response
 
+    def upload_dicom(self, file_name):
+        """Uploads single file to dicomWeb"""
+        with open(file_name, 'rb') as file:
+            headers = self.apply_credentials(
+                {'Content-Type': 'application/dicom'})
+            response = requests.post(self.build_url(
+                "studies", ""), headers=headers, data=file)
+            if response.status_code == 200:
+                logging.info('%s is uploaded', file_name)
+            else:
+                logging.info('failed to upload %s\n %s',
+                             file_name, response.text)
+            return response.status_code
+
     def build_url(self, path, parameters):
         """Builds url from host and path"""
         path_str = str(path)

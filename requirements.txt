@@ -6,3 +6,4 @@ validators
 requests_toolbelt
 sure
 httpretty
+pytest-check

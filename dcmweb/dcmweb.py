@@ -2,6 +2,9 @@
 """Module contains classes for interacting with DICOMweb
 """
 import logging
+import glob
+import os
+import concurrent.futures
 import json
 import google.auth
 import google.auth.transport.requests
@@ -10,8 +13,11 @@ from . import requests_util
 logging.basicConfig(format='%(asctime)s -- %(message)s',
                     level=logging.INFO)
 
+MAX_WORKERS = 20
+INDENT = 2
+SORT_KEYS = True
 
-class Dcmweb:  # pylint: disable=too-few-public-methods; this is temporary while only one method is present
+class Dcmweb:
     """A command line utility for interacting with DICOMweb servers."""
 
     def __init__(self, host_str, multithreading, authenticator):
@@ -22,12 +28,25 @@ class Dcmweb:  # pylint: disable=too-few-public-methods; this is temporary while
         """Performs a search over studies, series or instances.
         parameters is the QIDO search parameters
         """
-        search_result = self.requests.request(
-            path, requests_util.add_limit_if_not_present(parameters), {}).text
-        if "limit" not in parameters and len(json.loads(search_result)) >= requests_util.PAGE_SIZE:
+        search_result = json.loads(self.requests.request(
+            path, requests_util.add_limit_if_not_present(parameters), {}).text)
+        if "limit" not in parameters and len(search_result) >= requests_util.PAGE_SIZE:
             logging.info('Please note: by deafult search returns only first %s result,\
  please use additional parameters (offset,limit) to get more', requests_util.PAGE_SIZE)
-        return search_result
+        return json.dumps(search_result, indent=INDENT, sort_keys=SORT_KEYS)
+
+    def store(self, *masks):
+        """Stores one or more files by posting multiple StoreInstances requests."""
+        with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+            for mask in masks:
+                mask = mask.replace("**", "**/*")
+                for file_name in glob.glob(mask, recursive=True):
+                    if not os.path.isdir(file_name):
+                        if self.multithreading:
+                            executor.submit(self.requests.upload_dicom, file_name)
+                        else:
+                            self.requests.upload_dicom(file_name)
+
 
 
 

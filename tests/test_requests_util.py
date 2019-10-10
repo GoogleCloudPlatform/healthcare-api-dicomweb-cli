@@ -73,3 +73,23 @@ class Authenticator:
         assert request.headers.get("Authorization") == self.token
         assert uri == URL + "/"
         return [200, response_headers, ""]
+
+@httpretty.activate
+def test_upload():
+    """file should be uploaded correctly"""
+    requests = requests_util.Requests(URL, None)
+    httpretty.register_uri(
+        httpretty.POST,
+        URL + "/studies",
+        body=request_callback
+    )
+    assert requests.upload_dicom("./tests/test_requests_util.py") == 200
+
+
+def request_callback(request, uri, response_headers):
+    """checks post request"""
+    content_type = request.headers.get('Content-Type')
+    assert content_type == 'application/dicom', 'expected application/dicom\
+     but received Content-Type: {}'.format(content_type)
+    assert uri == URL + "/studies"
+    return [200, response_headers, ""]
