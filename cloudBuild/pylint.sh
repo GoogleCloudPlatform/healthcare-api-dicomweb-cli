@@ -14,13 +14,14 @@
 
 #method to check folder
 checkFolder () {
-  pylint ./$1/* 
+  pylint ./$1/*.py 
   if [ $? -ne 0 ]; then
     exit 1;
   fi
 }
 
-pip3 install pylint pytest
+pip3 install pylint 
+pip3 install -r requirements.txt
 
 checkFolder ./dcmweb
 checkFolder ./tests

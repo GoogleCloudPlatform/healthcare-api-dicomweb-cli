@@ -16,7 +16,12 @@ apt-get update
 apt-get -qq install python3.7 -y 
 
 pip3 install tox wheel
+pip3 install -r requirements.txt
 tox
+test_result=$?
+if [[ "${test_result}" != 0 ]]; then
+  echo "tests failed"
+  exit 1
+fi
 python3 setup.py bdist_wheel
 pip3 install ./dist/*.whl 
-dcmweb

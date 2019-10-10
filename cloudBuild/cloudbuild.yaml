@@ -2,3 +2,17 @@ steps:
 - name: "docker.io/library/python:3.6"
   args: ['bash', './cloudBuild/runTestsAndBuild.sh']
 
+- name: 'google/cloud-sdk:251.0.0'
+  args:
+  - 'bash'
+  - './cloudBuild/integrationTests.sh'
+  - '${_STAGE}'
+  - '${_PROJECT}'
+  - '${_LOCATION}'
+  - '${_DATASET}'
+  
+substitutions:
+  _STAGE: v1beta1
+  _PROJECT: gcp-healthcare-oss-test
+  _LOCATION: us-central1
+  _DATASET: healthcare-api-dicomweb-cli-test
