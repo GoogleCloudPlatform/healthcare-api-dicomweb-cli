@@ -40,7 +40,7 @@ setuptools.setup(
 
         "Programming Language :: Python :: 3",
 
-        "License :: Apache License 2.0",
+        "License :: OSI Approved :: Apache Software License",
 
         "Operating System :: OS Independent",
 

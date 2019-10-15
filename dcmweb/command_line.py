@@ -10,7 +10,7 @@ def host_wrapper(host, m):  # pylint: disable=invalid-name; disabled because m i
     """host - url for dicomWeb
     m - whether to perform batch operations in parallel
     or sequentially, default is in parallel"""
-    return dcmweb.Dcmweb(host, m, dcmweb.GoogleAuthenticator())
+    return dcmweb.Dcmweb(host, m == 1, dcmweb.GoogleAuthenticator())
 
 
 def main():
