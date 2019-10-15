@@ -33,7 +33,8 @@ setuptools.setup(
         'google.auth',
         'requests',
         'validators',
-        'requests_toolbelt'
+        'requests_toolbelt',
+        'hurry.filesize'
     ],
 
     classifiers=[

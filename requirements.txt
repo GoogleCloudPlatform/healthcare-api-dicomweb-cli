@@ -7,3 +7,4 @@ requests_toolbelt
 sure
 httpretty
 pytest-check
+hurry.filesize
