@@ -10,6 +10,11 @@ from dcmweb import requests_util
 
 URL = "https://dicom.com"
 
+DELETE_CASES = {"/studies/1": 200,
+                "/studies/1/series/1": 200,
+                "/studies/1/series/1/instances/1": 200,
+                "/studies/notExist": 404}
+
 
 class RequestsUtilTests(unittest.TestCase):
     """class is needed to handle exceptions"""
@@ -39,6 +44,29 @@ class RequestsUtilTests(unittest.TestCase):
         assert requests.request("", "", {}).text == "body"
         with self.assertRaises(requests_util.NetworkError):
             print(requests.request("not200", "", {}))
+
+    @httpretty.activate
+    def test_delete(self):
+        """files should be deleted correctly"""
+        requests = requests_util.Requests(URL, None)
+        for url, status in DELETE_CASES.items():
+            httpretty.register_uri(
+                httpretty.DELETE,
+                URL + url,
+                status=status
+            )
+            if status == 200:
+                requests.delete_dicom(url)
+            else:
+                with self.assertRaises(requests_util.NetworkError):
+                    requests.delete_dicom(url)
+
+    @httpretty.activate
+    def test_delete_icorrect_path(self):
+        """path should be checked"""
+        requests = requests_util.Requests(URL, None)
+        with self.assertRaises(ValueError):
+            requests.delete_dicom("/incorrect/path")
 
 
 def test_get_path_level():

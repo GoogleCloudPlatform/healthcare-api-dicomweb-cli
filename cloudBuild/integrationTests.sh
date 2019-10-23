@@ -59,6 +59,11 @@ search_exit_code=$?
 dcmweb $host retrieve studies/111/series/111/instances/111
 retrieve_exit_code=$?
 
+dcmweb $host delete studies/111/series/111/instances/111
+delete_exit_code=$?
+
+dcmweb $host search studies > ./cloudBuild/searchResultsAfterDelete.json
+
 gcloud alpha healthcare dicom-stores delete "${dicom_store_name}" \
   --location=$LOCATION \
   --dataset=$DATASET \
@@ -66,8 +71,10 @@ gcloud alpha healthcare dicom-stores delete "${dicom_store_name}" \
 
 compare_files ./cloudBuild/searchResults.json ./cloudBuild/expectedSearchResults.json
 compare_files ./111/111/111.dcm ./cloudBuild/dcms/1.dcm
+compare_files ./cloudBuild/searchResultsAfterDelete.json ./cloudBuild/expectedSearchResultsAfterDelete.json
 
 
 check_exit_code $single_upload_exit_code "single upload failed"
 check_exit_code $search_exit_code "search failed"
 check_exit_code $retrieve_exit_code "retrieve failed"
+check_exit_code $delete_exit_code "delete failed"
