@@ -28,6 +28,15 @@ check_exit_code() {
   fi
 }
 
+compare_files(){
+  difflines=$(diff ${1} ${2})
+  if [ ! -z "$difflines" ]
+    then
+        echo $difflines
+        exit 1
+  fi
+}
+
 apt-get -qq install python3 python3-pip -y 
 pip3 install -r requirements.txt
 pip3 install ./dist/*.whl 
@@ -47,18 +56,18 @@ single_upload_exit_code=$?
 dcmweb $host search studies > ./cloudBuild/searchResults.json
 search_exit_code=$?
 
+dcmweb $host retrieve studies/111/series/111/instances/111
+retrieve_exit_code=$?
 
 gcloud alpha healthcare dicom-stores delete "${dicom_store_name}" \
   --location=$LOCATION \
   --dataset=$DATASET \
   --quiet
 
-difflines=$(diff ./cloudBuild/searchResults.json ./cloudBuild/expectedSearchResults.json)
-if [ ! -z "$difflines" ]
-  then
-      echo $difflines
-      exit 1
-fi
+compare_files ./cloudBuild/searchResults.json ./cloudBuild/expectedSearchResults.json
+compare_files ./111/111/111.dcm ./cloudBuild/dcms/1.dcm
+
 
 check_exit_code $single_upload_exit_code "single upload failed"
 check_exit_code $search_exit_code "search failed"
+check_exit_code $retrieve_exit_code "retrieve failed"

@@ -8,14 +8,15 @@ import concurrent.futures
 import json
 import google.auth
 import google.auth.transport.requests
+
 from . import requests_util
 
 logging.basicConfig(format='%(asctime)s -- %(message)s',
                     level=logging.INFO)
 
-MAX_WORKERS = 20
 INDENT = 2
 SORT_KEYS = True
+QUEUE_LIMIT = 100
 
 class Dcmweb:
     """A command line utility for interacting with DICOMweb servers."""
@@ -37,21 +38,48 @@ class Dcmweb:
 
     def store(self, *masks):
         """Stores one or more files by posting multiple StoreInstances requests."""
-        with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=None if self.multithreading else 1)\
+        as executor:
             for mask in masks:
                 mask = mask.replace("**", "**/*")
                 for file_name in glob.glob(mask, recursive=True):
                     if not os.path.isdir(file_name):
-                        if self.multithreading:
-                            executor.submit(self.requests.upload_dicom, file_name)
-                        else:
-                            self.requests.upload_dicom(file_name)
+                        executor.submit(self.requests.upload_dicom, file_name)
 
-
+    def retrieve(self, path="", output="./", type=None):  # pylint: disable=redefined-builtin; part of Fire lib configuration
+        """Retrieves one or more studies, series, instances or frames from the server."""
+        ids = requests_util.ids_from_path(path)
+        if requests_util.get_path_level(ids) in ("instances", "frames"):
+            self.requests.download_dicom_by_ids(ids, output, type)
+            return
+        page = 0
+        instances = []
+        running_futures = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=None if self.multithreading else 1)\
+        as executor:
+            while page == 0 or len(instances) > 0:
+                page_content = self.requests.search_instances_by_page(
+                    ids, "includefield={}&includefield={}"
+                    .format(requests_util.STUDY_TAG, requests_util.SERIES_TAG), page)
+                instances = json.loads(page_content)
+                while len(running_futures) > QUEUE_LIMIT:
+                    done_futures, running_futures = concurrent.futures.wait(
+                        running_futures, timeout=1)
+                    for done_future in done_futures:
+                        try:
+                            done_future.result()
+                        except requests_util.NetworkError as exception:
+                            logging.error('Download failure: %s', exception)
+                for instance in instances:
+                    running_futures.append(executor.submit(
+                        self.requests.download_dicom_by_ids,
+                        requests_util.ids_from_json(instance), output, type))
+                page += 1
 
 
 class GoogleAuthenticator:
     """Handles authenticattion with Google"""
+
     def __init__(self):
         self.credentials = None
 
