@@ -76,6 +76,13 @@ class Dcmweb:
                         requests_util.ids_from_json(instance), output, type))
                 page += 1
 
+    def delete(self, path):
+        """Deletes the given study, series or instance from the server."""
+        try:
+            self.requests.delete_dicom(path)
+        except requests_util.NetworkError as exception:
+            logging.error('Delete failure: %s', exception)
+
 
 class GoogleAuthenticator:
     """Handles authenticattion with Google"""

@@ -244,6 +244,15 @@ class Requests:
                              file_name, response.text)
             return response.status_code
 
+    def delete_dicom(self, path):
+        """ Deletes single dicom object by sending DELETE http request"""
+        path = validate_path(path)
+        response = requests.delete(self.build_url(
+            path, ""), headers=self.apply_credentials({}))
+        if response.status_code != 200:
+            raise NetworkError("sending http delete request: {}\n response: {}".format(
+                path, response.text))
+
     def search_instances_by_page(self, ids, parameters, page):
         """Performs page request"""
         limit = PAGE_SIZE
