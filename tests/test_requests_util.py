@@ -61,14 +61,6 @@ class RequestsUtilTests(unittest.TestCase):
                 with self.assertRaises(requests_util.NetworkError):
                     requests.delete_dicom(url)
 
-    @httpretty.activate
-    def test_delete_icorrect_path(self):
-        """path should be checked"""
-        requests = requests_util.Requests(URL, None)
-        with self.assertRaises(ValueError):
-            requests.delete_dicom("/incorrect/path")
-
-
 def test_get_path_level():
     """should get correct level"""
     check.equal(requests_util.get_path_level(
@@ -128,7 +120,7 @@ def test_upload():
         URL + "/studies",
         body=request_callback
     )
-    assert requests.upload_dicom("./tests/test_requests_util.py") == 200
+    assert requests.upload_dicom("./cloudBuild/dcms/1.dcm") == 8706
 
 
 def request_callback(request, uri, response_headers):

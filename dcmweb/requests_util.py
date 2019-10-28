@@ -4,6 +4,7 @@
 
 import logging
 import os
+from threading import Lock
 import urllib.parse as urlparse
 import requests
 import validators
@@ -90,12 +91,12 @@ def get_dicom_tag(dictionary, tag):
     return dictionary[tag]["Value"][0]
 
 
-def ids_from_json(json):
-    """Generates dict of ids based on json object"""
+def ids_from_json(json_dict):
+    """Generates dict of ids based on json dict object"""
     ids = {}
-    ids[STUDY_ID] = get_dicom_tag(json, STUDY_TAG)
-    ids[SERIES_ID] = get_dicom_tag(json, SERIES_TAG)
-    ids[INSTANCE_ID] = get_dicom_tag(json, INSTANCE_TAG)
+    ids[STUDY_ID] = get_dicom_tag(json_dict, STUDY_TAG)
+    ids[SERIES_ID] = get_dicom_tag(json_dict, SERIES_TAG)
+    ids[INSTANCE_ID] = get_dicom_tag(json_dict, INSTANCE_TAG)
     return ids
 
 
@@ -171,9 +172,11 @@ def path_from_ids(ids):
         path += id_to_string(FRAME_ID, ids[FRAME_ID])
     return path
 
+
 def id_to_string(id_key, id_value):
     """ Builds string based kay and value of id"""
     return SPLIT_CHAR+ID_PATH_MAP[id_key]+SPLIT_CHAR+id_value
+
 
 def extention_by_headers(content_type):
     """Generates extention string and multipart flag"""
@@ -203,7 +206,6 @@ def parse_boundary(content_type):
     return bytes(content_type[boundary_start:content_type.find(
         ";", boundary_start)], "utf-8")
 
-
 class Requests:
     """Class keep state of credentials
      and performs request to dicomWeb"""
@@ -211,11 +213,13 @@ class Requests:
     def __init__(self, host_str, authenticator):
         self.host = validate_host_str(host_str)
         self.authenticator = authenticator
+        self.authenticator_lock = Lock()
 
     def apply_credentials(self, headers):
         """Applyes credentials from authenticator to headers"""
         if self.authenticator:
-            self.authenticator.apply_credentials(headers)
+            with self.authenticator_lock:
+                self.authenticator.apply_credentials(headers)
         return headers
 
     def request(self, path, parameters, headers, stream=False):
@@ -231,18 +235,18 @@ class Requests:
         return response
 
     def upload_dicom(self, file_name):
-        """Uploads single file to dicomWeb"""
+        """Uploads single file to dicomWeb
+           :param file_name: path to dicom file in file system
+           :returns: amount of bytes transferred during upload"""
         with open(file_name, 'rb') as file:
             headers = self.apply_credentials(
                 {CONTENT_TYPE: 'application/dicom'})
             response = requests.post(self.build_url(
                 "studies", ""), headers=headers, data=file)
-            if response.status_code == 200:
-                logging.info('%s is uploaded', file_name)
-            else:
-                logging.info('failed to upload %s\n %s',
-                             file_name, response.text)
-            return response.status_code
+            if response.status_code != 200:
+                raise NetworkError("uploading file: {}\n response: {}".format(
+                    file_name, response.text))
+            return file.tell()
 
     def delete_dicom(self, path):
         """ Deletes single dicom object by sending DELETE http request"""
@@ -331,8 +335,7 @@ class Requests:
             path_str += "?"
         return self.host+path_str+parameters
 
-
-class MultipartChunksReader: #pylint: disable=too-few-public-methods; need for readability
+class MultipartChunksReader:  # pylint: disable=too-few-public-methods; need for readability
     """Class keep state of multipart stream"""
 
     def __init__(self, chunks, boundary):

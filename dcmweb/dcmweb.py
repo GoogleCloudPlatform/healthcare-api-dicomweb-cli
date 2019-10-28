@@ -4,8 +4,8 @@
 import logging
 import glob
 import os
-import concurrent.futures
 import json
+import concurrent.futures
 import google.auth
 import google.auth.transport.requests
 
@@ -17,6 +17,32 @@ logging.basicConfig(format='%(asctime)s -- %(message)s',
 INDENT = 2
 SORT_KEYS = True
 QUEUE_LIMIT = 100
+
+
+def execute_futures(futures_arguments, multithreading):
+    """Executing features builded from futures_arguments set"""
+    running_futures = set([])
+    with concurrent.futures.ThreadPoolExecutor(max_workers=None if multithreading else 1)\
+            as executor:
+        for future_arguments in futures_arguments:
+            running_futures = wait_for_futures_limit(
+                running_futures, QUEUE_LIMIT)
+            running_futures.add(executor.submit(*future_arguments))
+        wait_for_futures_limit(running_futures, 0)
+
+
+def wait_for_futures_limit(running_futures, limit):
+    """Waits until running_futures set reaches size of limit"""
+    while len(running_futures) > limit:
+        done_futures, running_futures = concurrent.futures.wait(
+            running_futures, timeout=1)
+        for done_future in done_futures:
+            try:
+                done_future.result()
+            except requests_util.NetworkError as exception:
+                logging.error('Request failure: %s', exception)
+    return running_futures
+
 
 class Dcmweb:
     """A command line utility for interacting with DICOMweb servers."""
@@ -38,13 +64,8 @@ class Dcmweb:
 
     def store(self, *masks):
         """Stores one or more files by posting multiple StoreInstances requests."""
-        with concurrent.futures.ThreadPoolExecutor(max_workers=None if self.multithreading else 1)\
-        as executor:
-            for mask in masks:
-                mask = mask.replace("**", "**/*")
-                for file_name in glob.glob(mask, recursive=True):
-                    if not os.path.isdir(file_name):
-                        executor.submit(self.requests.upload_dicom, file_name)
+        execute_futures(
+            self._files_to_upload(*masks), self.multithreading)
 
     def retrieve(self, path="", output="./", type=None):  # pylint: disable=redefined-builtin; part of Fire lib configuration
         """Retrieves one or more studies, series, instances or frames from the server."""
@@ -52,29 +73,8 @@ class Dcmweb:
         if requests_util.get_path_level(ids) in ("instances", "frames"):
             self.requests.download_dicom_by_ids(ids, output, type)
             return
-        page = 0
-        instances = []
-        running_futures = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=None if self.multithreading else 1)\
-        as executor:
-            while page == 0 or len(instances) > 0:
-                page_content = self.requests.search_instances_by_page(
-                    ids, "includefield={}&includefield={}"
-                    .format(requests_util.STUDY_TAG, requests_util.SERIES_TAG), page)
-                instances = json.loads(page_content)
-                while len(running_futures) > QUEUE_LIMIT:
-                    done_futures, running_futures = concurrent.futures.wait(
-                        running_futures, timeout=1)
-                    for done_future in done_futures:
-                        try:
-                            done_future.result()
-                        except requests_util.NetworkError as exception:
-                            logging.error('Download failure: %s', exception)
-                for instance in instances:
-                    running_futures.append(executor.submit(
-                        self.requests.download_dicom_by_ids,
-                        requests_util.ids_from_json(instance), output, type))
-                page += 1
+        execute_futures(self._files_to_download(
+            ids, output, type), self.multithreading)
 
     def delete(self, path):
         """Deletes the given study, series or instance from the server."""
@@ -82,6 +82,28 @@ class Dcmweb:
             self.requests.delete_dicom(path)
         except requests_util.NetworkError as exception:
             logging.error('Delete failure: %s', exception)
+
+    def _files_to_upload(self, *masks):
+        """Generates set of argumets to run upload based on masks"""
+        for mask in masks:
+            mask = mask.replace("**", "**/*")
+            for file_name in glob.glob(mask, recursive=True):
+                if not os.path.isdir(file_name):
+                    yield (self.requests.upload_dicom, file_name)
+
+    def _files_to_download(self, ids, output, mime_type):
+        """Generates set of argumets to run download based on ids dict"""
+        page = 0
+        instances = []
+        while page == 0 or len(instances) > 0:
+            page_content = self.requests.search_instances_by_page(
+                ids, "includefield={}&includefield={}"
+                .format(requests_util.STUDY_TAG, requests_util.SERIES_TAG), page)
+            instances = json.loads(page_content)
+            for instance in instances:
+                yield (self.requests.download_dicom_by_ids,
+                       requests_util.ids_from_json(instance), output, mime_type)
+            page += 1
 
 
 class GoogleAuthenticator:
