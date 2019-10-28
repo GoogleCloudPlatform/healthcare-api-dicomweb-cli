@@ -8,6 +8,7 @@ import json
 import concurrent.futures
 import google.auth
 import google.auth.transport.requests
+from hurry.filesize import size
 
 from . import requests_util
 
@@ -19,29 +20,50 @@ SORT_KEYS = True
 QUEUE_LIMIT = 100
 
 
-def execute_futures(futures_arguments, multithreading):
-    """Executing features builded from futures_arguments set"""
+def execute_file_transfer_futures(futures_arguments, multithreading):
+    """Executing features builded from futures_arguments set
+    :param futures_arguments: set of tuples to set up futures
+    :param multithreading: flag for multithreading execution
+    :returns: a dict {'bytes':<amount of transferred bytes>, 'files':<amount of transferred files>}
+    """
     running_futures = set([])
+    transferred = {'bytes': 0, 'files': 0}
     with concurrent.futures.ThreadPoolExecutor(max_workers=None if multithreading else 1)\
             as executor:
         for future_arguments in futures_arguments:
-            running_futures = wait_for_futures_limit(
-                running_futures, QUEUE_LIMIT)
+            running_futures, transferred = wait_for_futures_limit(
+                running_futures, transferred, QUEUE_LIMIT)
             running_futures.add(executor.submit(*future_arguments))
-        wait_for_futures_limit(running_futures, 0)
+        wait_for_futures_limit(running_futures, transferred, 0)
+    return transferred
 
 
-def wait_for_futures_limit(running_futures, limit):
-    """Waits until running_futures set reaches size of limit"""
+def wait_for_futures_limit(running_futures, transferred, limit):
+    """Waits until running_futures set reaches size of limit
+    :param running_futures: set of futures awaited to be done,
+                            each future should return amount of transferred bytes
+    :param transferred: a dict {'bytes': <amount of transferred bytes>,
+                        'files': <amount of transferred files>}
+    :returns: updated transferred dict
+    """
+    transferred_bytes = 0
+    transferred_files = 0
     while len(running_futures) > limit:
         done_futures, running_futures = concurrent.futures.wait(
             running_futures, timeout=1)
         for done_future in done_futures:
             try:
-                done_future.result()
+                transferred_bytes += done_future.result()
+                transferred_files += 1
             except requests_util.NetworkError as exception:
                 logging.error('Request failure: %s', exception)
-    return running_futures
+    if transferred_files > 0:
+        transferred['files'] += transferred_files
+        transferred['bytes'] += transferred_bytes
+        #extra spaces to cover previous line if it has few charates
+        logging.info('Transferred %s in %s files     \x1b[1A\x1b[\x1b[80D', size(
+            transferred['bytes']), transferred['files'])
+    return running_futures, transferred
 
 
 class Dcmweb:
@@ -64,7 +86,7 @@ class Dcmweb:
 
     def store(self, *masks):
         """Stores one or more files by posting multiple StoreInstances requests."""
-        execute_futures(
+        execute_file_transfer_futures(
             self._files_to_upload(*masks), self.multithreading)
 
     def retrieve(self, path="", output="./", type=None):  # pylint: disable=redefined-builtin; part of Fire lib configuration
@@ -73,7 +95,7 @@ class Dcmweb:
         if requests_util.get_path_level(ids) in ("instances", "frames"):
             self.requests.download_dicom_by_ids(ids, output, type)
             return
-        execute_futures(self._files_to_download(
+        execute_file_transfer_futures(self._files_to_download(
             ids, output, type), self.multithreading)
 
     def delete(self, path):
