@@ -4,6 +4,8 @@
 import json
 import httpretty
 from dcmweb import dcmweb
+INDENT = dcmweb.INDENT
+SORT_KEYS = dcmweb.SORT_KEYS
 
 
 @httpretty.activate
@@ -18,9 +20,9 @@ def test_search():
     )
     response1 = [{"single": "response1"}]
     assert dcmweb_cli.search("study/123", "limit=1") == json.dumps(
-        response1, indent=dcmweb.INDENT, sort_keys=dcmweb.SORT_KEYS)
+        response1, indent=INDENT, sort_keys=SORT_KEYS)
     assert dcmweb_cli.search("study/123", "?limit=1") == json.dumps(
-        response1, indent=dcmweb.INDENT, sort_keys=dcmweb.SORT_KEYS)
+        response1, indent=INDENT, sort_keys=SORT_KEYS)
     httpretty.register_uri(
         httpretty.GET,
         "https://dicom.com/study/123?limit=5000",
@@ -29,7 +31,7 @@ def test_search():
     )
     response2 = [{"single": "response2"}]
     assert dcmweb_cli.search("study/123", "") == json.dumps(
-        response2, indent=dcmweb.INDENT, sort_keys=dcmweb.SORT_KEYS)
+        response2, indent=INDENT, sort_keys=SORT_KEYS)
     httpretty.register_uri(
         httpretty.GET,
         "https://dicom.com/studies?limit=5000",
@@ -38,4 +40,4 @@ def test_search():
     )
     response3 = [{"single": "response3"}]
     assert dcmweb_cli.search() == json.dumps(
-        response3, indent=dcmweb.INDENT, sort_keys=dcmweb.SORT_KEYS)
+        response3, indent=INDENT, sort_keys=SORT_KEYS)

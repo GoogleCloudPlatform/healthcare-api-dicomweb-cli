@@ -7,6 +7,7 @@ import random
 import pytest_check as check
 import httpretty
 from dcmweb import requests_util
+from dcmweb import resources
 
 URL = "https://dicom.com"
 
@@ -18,13 +19,6 @@ DELETE_CASES = {"/studies/1": 200,
 
 class RequestsUtilTests(unittest.TestCase):
     """class is needed to handle exceptions"""
-
-    def test_url_validation(self):
-        """url should be validated"""
-        with self.assertRaises(ValueError):
-            requests_util.validate_host_str("invalid url")
-        assert requests_util.validate_host_str(
-            "https://valid.url") == "https://valid.url/"
 
     @httpretty.activate
     def test_requests_handling(self):
@@ -60,15 +54,6 @@ class RequestsUtilTests(unittest.TestCase):
             else:
                 with self.assertRaises(requests_util.NetworkError):
                     requests.delete_dicom(url)
-
-def test_get_path_level():
-    """should get correct level"""
-    check.equal(requests_util.get_path_level(
-        requests_util.ids_from_path("")), "root")
-    check.equal(requests_util.get_path_level(
-        requests_util.ids_from_path("study/1/series/1/instances/3")), "instances")
-    check.equal(requests_util.get_path_level(
-        requests_util.ids_from_path("study/1/series/1/instances/3/frames/2")), "frames")
 
 
 def test_url_builder():
@@ -162,7 +147,7 @@ def test_download_path():
             'Content-Type': 'application/dicom'}
     )
     requests = requests_util.Requests(URL, None)
-    requests.download_dicom_by_ids(requests_util.ids_from_path(
+    requests.download_dicom_by_ids(resources.ids_from_path(
         "studies/1/series/2/instances/3"), "./testData", None)
     assert os.path.isfile("./testData/1/2/3.dcm")
     file = open("./testData/1/2/3.dcm", 'r')
@@ -181,9 +166,9 @@ def test_download_instance_json():
             'Content-Type': 'application/dicom'}
     )
     requests = requests_util.Requests(URL, None)
-    requests.download_dicom_by_ids(requests_util.ids_from_json(
-        {requests_util.STUDY_TAG: {"Value": ["3"]}, requests_util.SERIES_TAG: {
-            "Value": ["4"]}, requests_util.INSTANCE_TAG: {"Value": ["5"]}}), "./testData", None)
+    requests.download_dicom_by_ids(resources.ids_from_json(
+        {resources.STUDY_TAG: {"Value": ["3"]}, resources.SERIES_TAG: {
+            "Value": ["4"]}, resources.INSTANCE_TAG: {"Value": ["5"]}}), "./testData", None)
     assert os.path.isfile("./testData/1/2/3.dcm")
     file = open("./testData/3/4/5.dcm", 'r')
     data = file.read()
@@ -205,23 +190,13 @@ def test_download_multipart():
         streaming=True
     )
     requests = requests_util.Requests(URL, None)
-    requests.download_dicom_by_ids(requests_util.ids_from_path(
+    requests.download_dicom_by_ids(resources.ids_from_path(
         "studies/6/series/7/instances/8"), "./testData", "image/png")
     assert os.path.isfile("./testData/6/7/8_frame_1.png")
     assert os.path.isfile("./testData/6/7/8_frame_2.png")
     file = open("./testData/6/7/8_frame_2.png", 'r')
     data = file.read()
     assert data == 'data2'
-
-
-def test_ids_from_path():
-    """should get correct ids"""
-    check.equal(requests_util.ids_from_path(
-        "study/1/series/2/instances/3"), {'study_id': '1', 'series_id': '2', 'instance_id': '3', })
-    check.equal(requests_util.ids_from_path(
-        "study/1/series/2/instances/3/frames/4"),
-                {'study_id': '1', 'series_id': '2', 'instance_id': '3', 'frame_id': '4'})
-
 
 def test_extention_by_headers():
     """should get correct extention"""
