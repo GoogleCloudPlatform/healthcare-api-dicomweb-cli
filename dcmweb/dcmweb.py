@@ -11,6 +11,7 @@ import google.auth.transport.requests
 from hurry.filesize import size
 
 from . import requests_util
+from . import resources
 
 logging.basicConfig(format='%(asctime)s -- %(message)s',
                     level=logging.INFO)
@@ -91,8 +92,8 @@ class Dcmweb:
 
     def retrieve(self, path="", output="./", type=None):  # pylint: disable=redefined-builtin; part of Fire lib configuration
         """Retrieves one or more studies, series, instances or frames from the server."""
-        ids = requests_util.ids_from_path(path)
-        if requests_util.get_path_level(ids) in ("instances", "frames"):
+        ids = resources.ids_from_path(path)
+        if resources.get_path_level(ids) in ("instances", "frames"):
             self.requests.download_dicom_by_ids(ids, output, type)
             return
         execute_file_transfer_futures(self._files_to_download(
@@ -120,11 +121,11 @@ class Dcmweb:
         while page == 0 or len(instances) > 0:
             page_content = self.requests.search_instances_by_page(
                 ids, "includefield={}&includefield={}"
-                .format(requests_util.STUDY_TAG, requests_util.SERIES_TAG), page)
+                .format(resources.STUDY_TAG, resources.SERIES_TAG), page)
             instances = json.loads(page_content)
             for instance in instances:
                 yield (self.requests.download_dicom_by_ids,
-                       requests_util.ids_from_json(instance), output, mime_type)
+                       resources.ids_from_json(instance), output, mime_type)
             page += 1
 
 
