@@ -30,7 +30,7 @@ setuptools.setup(
 
     install_requires=[
         'fire',
-        'google.auth',
+        'google-auth',
         'requests',
         'validators',
         'requests_toolbelt',
