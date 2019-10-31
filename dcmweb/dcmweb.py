@@ -36,6 +36,7 @@ def execute_file_transfer_futures(futures_arguments, multithreading):
                 running_futures, transferred, QUEUE_LIMIT)
             running_futures.add(executor.submit(*future_arguments))
         wait_for_futures_limit(running_futures, transferred, 0)
+    logging.info('')#new line to avoid overlap by next output
     return transferred
 
 
