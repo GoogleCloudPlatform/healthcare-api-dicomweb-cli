@@ -94,6 +94,7 @@ class Dcmweb:
     def retrieve(self, path="", output="./", type=None):  # pylint: disable=redefined-builtin; part of Fire lib configuration
         """Retrieves one or more studies, series, instances or frames from the server."""
         ids = resources.ids_from_path(path)
+        logging.info('Saving files into %s', output)
         if resources.get_path_level(ids) in ("instances", "frames"):
             self.requests.download_dicom_by_ids(ids, output, type)
             return
