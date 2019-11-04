@@ -94,6 +94,21 @@ dcmweb $host search instances StudyDate=19941013
 dcmweb $host search 
 ```
 
+Since search returns JSON data it may be redirected into parse tools like [jq](https://stedolan.github.io/jq/)
+
+```bash
+# will parse StudyUIDs/PatientNames for each study in search results
+dcmweb $host search | jq '.[] | .["0020000D"].Value[0],.["00100010"].Value[0]'
+```
+
+Output of jq may be redirected as well
+```bash
+# will parse StudyUIDs for each study in search results
+# and count lines of jq output by wc
+dcmweb $host search | jq '.[] | .["0020000D"].Value[0]' | wc -l
+```
+list of dicom tags may be found in this [page](https://dicom.innolitics.com/ciods/)
+
 **store**
 
 ```bash
