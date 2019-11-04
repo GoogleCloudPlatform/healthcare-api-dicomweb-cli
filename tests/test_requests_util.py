@@ -15,6 +15,13 @@ DELETE_CASES = {"/studies/1": 200,
                 "/studies/1/series/1": 200,
                 "/studies/1/series/1/instances/1": 200,
                 "/studies/notExist": 404}
+ADJUST_CASES = {"image/png": "multipart/related; type=\"image/png\"; ",
+                "application/dicom; transfer-syntax=1.2.840.10008.1.2.1": "multipart/related; \
+type=\"application/dicom\"; transfer-syntax==1.2.840.10008.1.2.1",
+                "": "application/dicom; transfer-syntax=*",
+                "application/dicom; transfer-syntax=*; something=else": None,
+                "transfer-syntax=1.2.840.10008.1.2.1": None
+                }
 
 
 class RequestsUtilTests(unittest.TestCase):
@@ -54,6 +61,16 @@ class RequestsUtilTests(unittest.TestCase):
             else:
                 with self.assertRaises(requests_util.NetworkError):
                     requests.delete_dicom(url)
+
+    def test_adjust_mime_type(self):
+        """mime type should be adjusted"""
+        for mime_type, mime_type_adjusted in ADJUST_CASES.items():
+            if mime_type_adjusted:
+                check.equal(requests_util.adjust_mime_type(
+                    mime_type), mime_type_adjusted)
+            else:
+                with self.assertRaises(ValueError):
+                    requests_util.adjust_mime_type(mime_type)
 
 
 def test_url_builder():
@@ -118,7 +135,7 @@ def request_callback(request, uri, response_headers):
 
 
 @httpretty.activate
-def test_download_file():
+def test_download_dicom():
     """should download correct file"""
     httpretty.register_uri(
         httpretty.GET,
@@ -174,6 +191,24 @@ def test_download_instance_json():
     data = file.read()
     assert data == "5.dcm"
 
+@httpretty.activate
+def test_download_dicom_by_ids():
+    """should download correct file by json based dict"""
+    httpretty.register_uri(
+        httpretty.GET,
+        URL + "/studies/1/series/2/instances/6",
+        body="idsData",
+        adding_headers={
+            'Content-Type': 'application/dicom'}
+    )
+    requests = requests_util.Requests(URL, None)
+    requests.download_dicom_by_ids({'study_id': '1', 'series_id': '2', 'instance_id': '6', },\
+    "./testData", None)
+    assert os.path.isfile("./testData/1/2/6.dcm")
+    file = open("./testData/1/2/6.dcm", 'r')
+    data = file.read()
+    assert data == "idsData"
+
 
 @httpretty.activate
 def test_download_multipart():
@@ -198,15 +233,16 @@ def test_download_multipart():
     data = file.read()
     assert data == 'data2'
 
-def test_extention_by_headers():
-    """should get correct extention"""
-    check.equal(requests_util.extention_by_headers(
+
+def test_extension_by_headers():
+    """should get correct extension"""
+    check.equal(requests_util.extension_by_headers(
         'multipart/related; type="application/dicom"'), (".dcm"))
-    check.equal(requests_util.extention_by_headers(
+    check.equal(requests_util.extension_by_headers(
         'type="application/dicom"'), (".dcm"))
-    check.equal(requests_util.extention_by_headers(
+    check.equal(requests_util.extension_by_headers(
         'type="image/jpeg"'), (".jpg"))
-    check.equal(requests_util.extention_by_headers(
+    check.equal(requests_util.extension_by_headers(
         'multipart/related; type="image/png"'), (".png"))
 
 
