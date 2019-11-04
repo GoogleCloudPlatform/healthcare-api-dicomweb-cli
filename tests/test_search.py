@@ -11,6 +11,11 @@ SORT_KEYS = dcmweb.SORT_KEYS
 @httpretty.activate
 def test_search():
     """request shuld use limit from search"""
+    httpretty.register_uri(
+        httpretty.GET,
+        "https://dicom.com/studies?limit=1",
+        match_querystring=True
+    )
     dcmweb_cli = dcmweb.Dcmweb("https://dicom.com/", False, None)
     httpretty.register_uri(
         httpretty.GET,

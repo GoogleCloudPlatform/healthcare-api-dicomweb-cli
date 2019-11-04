@@ -67,6 +67,12 @@ class RetrieveTests(unittest.TestCase):
                 'Content-Type': 'application/dicom'},
         )
 
+        httpretty.register_uri(
+            httpretty.GET,
+            URL+"studies?limit=1",
+            match_querystring=True
+        )
+
         mock_data = [
             b'1C\r\n--456 Content-Type:image/png\r\n4\r\ndata\r\n5\r\n--456\r\n0\r\n\r\n']
         httpretty.register_uri(
