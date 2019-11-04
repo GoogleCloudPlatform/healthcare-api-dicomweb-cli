@@ -18,6 +18,7 @@ PNG_EXTENSION = ".png"
 
 CONTENT_TYPE = "Content-Type"
 MULTIPART = "multipart/related"
+TRANSFER_SYNTAX = "transfer-syntax="
 
 
 def filter_urllib3_logging():
@@ -51,8 +52,8 @@ def add_limit_if_not_present(parameters, limit=PAGE_SIZE):
     return parameters
 
 
-def extention_by_headers(content_type):
-    """Generates extention string and multipart flag"""
+def extension_by_headers(content_type):
+    """Generates extension string and multipart flag"""
     if "dicom" in content_type:
         return DCM_EXTENSION
     if "jpeg" in content_type:
@@ -60,7 +61,7 @@ def extention_by_headers(content_type):
     if "png" in content_type:
         return PNG_EXTENSION
 
-    raise ValueError("unknown extention {}".format(content_type))
+    raise ValueError("unknown extension {}".format(content_type))
 
 
 def parse_boundary(content_type):
@@ -69,6 +70,29 @@ def parse_boundary(content_type):
     return bytes(content_type[boundary_start:content_type.find(
         ";", boundary_start)], "utf-8")
 
+
+def adjust_mime_type(mime_type):
+    """"Adjusts mime type to format:
+    "multipart/related; type=<type>[; transfer-syntax=<transfer-syntax>]"
+    """
+    if not mime_type:
+        return "application/dicom; "+TRANSFER_SYNTAX+"*"
+    transfer_syntax = ""
+    if TRANSFER_SYNTAX in mime_type:
+        mime_type_splitted = mime_type.split("; ")
+        if len(mime_type_splitted) != 2:
+            raise ValueError("incorect type value {}".format(mime_type))
+        mime_type = mime_type_splitted[0]
+        transfer_syntax = TRANSFER_SYNTAX+'={}'.format(
+            mime_type_splitted[1][16:])
+
+    return MULTIPART + '; type="{}"; '.format(mime_type) + transfer_syntax
+
+def build_multipart_file_name(file_name, frame_index, extension):
+    """"Builds file name for different extensions and frames"""
+    if extension != DCM_EXTENSION:
+        file_name += "_frame_" + str(frame_index)
+    return file_name + extension
 
 class NetworkError(Exception):
     """exception for unexpected responses"""
@@ -149,22 +173,17 @@ class Requests:
         :param folder: folder in local file system to store files,
                        would be created if not exist
         :param file_name: base for file name,
-                                   extention and frame number added based on response headers
+                                   extension and frame number added based on response headers
         :param mime_type: mime_type to request (image/png, image/jpeg)
         """
-
-        if mime_type:
-            mime_type = MULTIPART + '; type="{}"'.format(mime_type)
-        else:
-            mime_type = "application/dicom; transfer-syntax=*"
+        mime_type = adjust_mime_type(mime_type)
 
         if not os.path.exists(folder):
             os.makedirs(folder)
 
         response = self.request(url, "", {'Accept': mime_type}, stream=True)
-
         content_type = response.headers[CONTENT_TYPE].lower()
-        extention = extention_by_headers(content_type)
+        extension = extension_by_headers(content_type)
         is_multipart = content_type.startswith(MULTIPART)
         file_name = folder + file_name
         boundary = None
@@ -173,7 +192,7 @@ class Requests:
             file = None
             boundary = parse_boundary(content_type)
         else:
-            file = open(file_name+extention, 'wb')
+            file = open(file_name+extension, 'wb')
         transferred = 0
         for chunk, new_file in MultipartChunksReader(
                 response.iter_content(chunk_size=8192), boundary).read_chunks():
@@ -181,8 +200,8 @@ class Requests:
                 if file:
                     file.close()
                 frame_index += 1
-                file = open(file_name+"_frame_" +
-                            str(frame_index)+extention, 'wb')
+                file = open(build_multipart_file_name(
+                    file_name, frame_index, extension), 'wb')
             transferred += file.write(chunk)
 
         if not file.closed:
