@@ -4,6 +4,7 @@
 import logging
 import glob
 import os
+import sys
 import json
 import concurrent.futures
 import google.auth
@@ -74,6 +75,7 @@ class Dcmweb:
     def __init__(self, host_str, multithreading, authenticator):
         self.multithreading = multithreading
         self.requests = requests_util.Requests(host_str, authenticator)
+        self._validate_request()
 
     def search(self, path="studies", parameters=""):
         """Performs a search over studies, series or instances.
@@ -138,6 +140,13 @@ class Dcmweb:
                        resources.ids_from_json(instance), output, mime_type)
             page += 1
 
+    def _validate_request(self):
+        """Performs request to check availability of service"""
+        try:
+            self.requests.request("studies", "limit=1", {})
+        except requests_util.NetworkError as exception:
+            logging.error('host %s is inaccessible: %s', self.requests.host, exception)
+            sys.exit(1)
 
 class GoogleAuthenticator:
     """Handles authenticattion with Google"""
