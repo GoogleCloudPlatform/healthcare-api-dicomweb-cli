@@ -21,6 +21,10 @@ def test_store():
         "https://dicom.com/studies",
         body=requests_counter.request_callback
     )
+    httpretty.register_uri(
+        httpretty.GET,
+        "https://dicom.com/studies?limit=1"
+    )
 
     for multithreading in (True, False):
         dcmweb_cli = dcmweb.Dcmweb("https://dicom.com/", multithreading, None)

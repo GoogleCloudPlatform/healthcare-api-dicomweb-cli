@@ -4,6 +4,7 @@
 import logging
 import glob
 import os
+import sys
 import json
 import concurrent.futures
 import google.auth
@@ -74,13 +75,19 @@ class Dcmweb:
     def __init__(self, host_str, multithreading, authenticator):
         self.multithreading = multithreading
         self.requests = requests_util.Requests(host_str, authenticator)
+        self._validate_request()
 
     def search(self, path="studies", parameters=""):
         """Performs a search over studies, series or instances.
         parameters is the QIDO search parameters
         """
-        search_result = json.loads(self.requests.request(
-            path, requests_util.add_limit_if_not_present(parameters), {}).text)
+        search_result = {}
+        try:
+            search_result = json.loads(self.requests.request(
+                path, requests_util.add_limit_if_not_present(parameters), {}).text)
+        except requests_util.NetworkError as exception:
+            logging.error('Search failure: %s', exception)
+            return "[]"
         if "limit" not in parameters and len(search_result) >= requests_util.PAGE_SIZE:
             logging.info('Please note: by deafult search returns only first %s result,\
  please use additional parameters (offset,limit) to get more', requests_util.PAGE_SIZE)
@@ -94,8 +101,12 @@ class Dcmweb:
     def retrieve(self, path="", output="./", type=None):  # pylint: disable=redefined-builtin; part of Fire lib configuration
         """Retrieves one or more studies, series, instances or frames from the server."""
         ids = resources.ids_from_path(path)
+        logging.info('Saving files into %s', output)
         if resources.get_path_level(ids) in ("instances", "frames"):
-            self.requests.download_dicom_by_ids(ids, output, type)
+            try:
+                self.requests.download_dicom_by_ids(ids, output, type)
+            except requests_util.NetworkError as exception:
+                logging.error('Retrieve failure: %s', exception)
             return
         execute_file_transfer_futures(self._files_to_download(
             ids, output, type), self.multithreading)
@@ -129,6 +140,13 @@ class Dcmweb:
                        resources.ids_from_json(instance), output, mime_type)
             page += 1
 
+    def _validate_request(self):
+        """Performs request to check availability of service"""
+        try:
+            self.requests.request("studies", "limit=1", {})
+        except requests_util.NetworkError as exception:
+            logging.error('host %s is inaccessible: %s', self.requests.host, exception)
+            sys.exit(1)
 
 class GoogleAuthenticator:
     """Handles authenticattion with Google"""

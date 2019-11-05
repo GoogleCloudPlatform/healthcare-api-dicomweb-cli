@@ -4,6 +4,7 @@
 import unittest
 import time
 import concurrent.futures
+import httpretty
 from dcmweb import dcmweb
 
 
@@ -13,6 +14,18 @@ class DcmwebTests(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super(DcmwebTests, self).__init__(*args, **kwargs)
         self.global_sum = 0
+
+    @httpretty.activate
+    def test_fail_validation(self):
+        """validation should fail"""
+        httpretty.register_uri(
+            httpretty.GET,
+            "https://dicom.com/studies?limit=1",
+            match_querystring=True,
+            status=404
+        )
+        with self.assertRaises(SystemExit):
+            dcmweb.Dcmweb("https://dicom.com/", False, None)
 
     def test_execute_file_transfer_futures(self):
         """all generated futures should be executed"""
