@@ -33,7 +33,6 @@ setuptools.setup(
         'google-auth',
         'requests',
         'validators',
-        'requests_toolbelt',
         'hurry.filesize'
     ],
 

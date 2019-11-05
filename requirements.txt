@@ -3,8 +3,6 @@ fire
 google.auth
 requests
 validators
-requests_toolbelt
-sure
 httpretty
 pytest-check
 hurry.filesize
