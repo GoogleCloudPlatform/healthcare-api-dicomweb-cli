@@ -178,8 +178,7 @@ class Requests:
         """
         mime_type = adjust_mime_type(mime_type)
 
-        if not os.path.exists(folder):
-            os.makedirs(folder)
+        os.makedirs(folder, exist_ok=True)
 
         response = self.request(url, "", {'Accept': mime_type}, stream=True)
         content_type = response.headers[CONTENT_TYPE].lower()
