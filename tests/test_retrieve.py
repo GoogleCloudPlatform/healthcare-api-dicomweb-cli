@@ -10,7 +10,7 @@ from dcmweb import dcmweb
 
 URL = "https://dicom.com/"
 
-RETRIEVE_CASES = {"": ["1/2/3.dcm", "3/2/1.dcm"],
+RETRIEVE_CASES = {"": ["1/2/3.dcm", "1/2/4.dcm", "3/2/1.dcm"],
                   "studies/1": ["1/2/3.dcm"],
                   "studies/1/series/2/instances/3": ["1/2/3.dcm"],
                   "studies/3/series/2/instances/1": ["3/2/1.dcm"],
@@ -25,13 +25,14 @@ class RetrieveTests(unittest.TestCase):
         httpretty.register_uri(
             httpretty.GET,
             generate_page_url(URL, 0),
-            body=generate_response(1, 2, 3),
+            body=generate_array_response(
+                [generate_response(1, 2, 3), generate_response(1, 2, 4)]),
             match_querystring=True
         )
         httpretty.register_uri(
             httpretty.GET,
             generate_page_url(URL, 5000),
-            body=generate_response(3, 2, 1),
+            body=generate_array_response([generate_response(3, 2, 1)]),
             match_querystring=True
         )
         httpretty.register_uri(
@@ -43,7 +44,7 @@ class RetrieveTests(unittest.TestCase):
         httpretty.register_uri(
             httpretty.GET,
             generate_page_url(URL+"studies/1/", 0),
-            body=generate_response(1, 2, 3),
+            body=generate_array_response([generate_response(1, 2, 3)]),
             match_querystring=True
         )
         httpretty.register_uri(
@@ -56,6 +57,13 @@ class RetrieveTests(unittest.TestCase):
             httpretty.GET,
             URL+"studies/1/series/2/instances/3",
             body="3.dcm",
+            adding_headers={
+                'Content-Type': 'application/dicom'},
+        )
+        httpretty.register_uri(
+            httpretty.GET,
+            URL+"studies/1/series/2/instances/4",
+            body="4.dcm",
             adding_headers={
                 'Content-Type': 'application/dicom'},
         )
@@ -109,10 +117,13 @@ class RetrieveTests(unittest.TestCase):
 
 def generate_response(study_id, series_id, instance_id):
     """generates json string for instance"""
-    return '[{"00080018":{"vr":"UI","Value":["'+str(instance_id)+'"]},\
+    return '{"00080018":{"vr":"UI","Value":["'+str(instance_id)+'"]},\
     "0020000D":{"vr":"UI","Value":["'+str(study_id)+'"]},\
-    "0020000E":{"vr":"UI","Value":["'+str(series_id)+'"]}}]'
+    "0020000E":{"vr":"UI","Value":["'+str(series_id)+'"]}}'
 
+def generate_array_response(responses):
+    """generates json string for list of instances"""
+    return "[" + ",".join(responses) + "]"
 
 def generate_page_url(base, offset):
     """generates url"""
