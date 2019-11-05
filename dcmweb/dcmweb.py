@@ -49,20 +49,15 @@ def wait_for_futures_limit(running_futures, transferred, limit):
                         'files': <amount of transferred files>}
     :returns: updated transferred dict
     """
-    transferred_bytes = 0
-    transferred_files = 0
     while len(running_futures) > limit:
         done_futures, running_futures = concurrent.futures.wait(
             running_futures, timeout=1)
         for done_future in done_futures:
             try:
-                transferred_bytes += done_future.result()
-                transferred_files += 1
+                transferred['bytes'] += done_future.result()
+                transferred['files'] += 1
             except requests_util.NetworkError as exception:
                 logging.error('Request failure: %s', exception)
-    if transferred_files > 0:
-        transferred['files'] += transferred_files
-        transferred['bytes'] += transferred_bytes
         #extra spaces to cover previous line if it has few charates
         logging.info('Transferred %s in %s files     \x1b[1A\x1b[\x1b[80D', size(
             transferred['bytes']), transferred['files'])
