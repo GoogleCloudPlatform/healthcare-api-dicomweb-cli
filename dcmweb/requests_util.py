@@ -83,7 +83,7 @@ def adjust_mime_type(mime_type):
         if len(mime_type_splitted) != 2:
             raise ValueError("incorect type value {}".format(mime_type))
         mime_type = mime_type_splitted[0]
-        transfer_syntax = TRANSFER_SYNTAX+'={}'.format(
+        transfer_syntax = TRANSFER_SYNTAX+'{}'.format(
             mime_type_splitted[1][16:])
 
     return MULTIPART + '; type="{}"; '.format(mime_type) + transfer_syntax

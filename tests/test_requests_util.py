@@ -17,7 +17,7 @@ DELETE_CASES = {"/studies/1": 200,
                 "/studies/notExist": 404}
 ADJUST_CASES = {"image/png": "multipart/related; type=\"image/png\"; ",
                 "application/dicom; transfer-syntax=1.2.840.10008.1.2.1": "multipart/related; \
-type=\"application/dicom\"; transfer-syntax==1.2.840.10008.1.2.1",
+type=\"application/dicom\"; transfer-syntax=1.2.840.10008.1.2.1",
                 "": "application/dicom; transfer-syntax=*",
                 "application/dicom; transfer-syntax=*; something=else": None,
                 "transfer-syntax=1.2.840.10008.1.2.1": None
