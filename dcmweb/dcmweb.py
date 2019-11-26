@@ -37,7 +37,7 @@ def execute_file_transfer_futures(futures_arguments, multithreading):
                 running_futures, transferred, QUEUE_LIMIT)
             running_futures.add(executor.submit(*future_arguments))
         wait_for_futures_limit(running_futures, transferred, 0)
-    logging.info('')#new line to avoid overlap by next output
+    logging.info('')  # new line to avoid overlap by next output
     return transferred
 
 
@@ -58,7 +58,7 @@ def wait_for_futures_limit(running_futures, transferred, limit):
                 transferred['files'] += 1
             except requests_util.NetworkError as exception:
                 logging.error('Request failure: %s', exception)
-        #extra spaces to cover previous line if it has few charates
+        # extra spaces to cover previous line if it has few charates
         logging.info('Transferred %s in %s files     \x1b[1A\x1b[\x1b[80D', size(
             transferred['bytes']), transferred['files'])
     return running_futures, transferred
@@ -74,7 +74,9 @@ class Dcmweb:
 
     def search(self, path="studies", parameters=""):
         """Performs a search over studies, series or instances.
-        parameters is the QIDO search parameters
+        :param path: Positional argument, specifies a path (studies/[<uid>/series/\
+[<uid>/instances/]]) to search on the server, default is \"/studies\"
+        :param parameters: QIDO search parameters formatted as URL query parameters.
         """
         search_result = {}
         try:
@@ -89,12 +91,23 @@ class Dcmweb:
         return json.dumps(search_result, indent=INDENT, sort_keys=SORT_KEYS)
 
     def store(self, *masks):
-        """Stores one or more files by posting multiple StoreInstances requests."""
+        """Stores one or more files by posting multiple StoreInstances requests.
+        :param masks: Positional argument, contains list of file paths or masks to upload, \
+mask support wildcard(*) and cross directory boundaries wildcard(**) char
+        """
         execute_file_transfer_futures(
             self._files_to_upload(*masks), self.multithreading)
 
     def retrieve(self, path="", output="./", type=None):  # pylint: disable=redefined-builtin; part of Fire lib configuration
-        """Retrieves one or more studies, series, instances or frames from the server."""
+        """Retrieves one or more studies, series, instances or frames from the server.
+         :param path: Positional argument, can either be empty \
+(indicates downloading of all studies) or specify a resource path (studies/<uid>[/series/<uid> \
+[/instances/<uid>[/frames/<frame_num]]]) to download from the server.
+         :param type: Controls what format to request the files in (defaults to application/dicom; \
+transfer-syntax=*). The tool will use this as the part content yype in the multipart accept header \
+being sent to the server.
+         :param output: Controls where to write the files to (defaults to current directory).
+        """
         ids = resources.ids_from_path(path)
         logging.info('Saving files into %s', output)
         if resources.get_path_level(ids) in ("instances", "frames"):
@@ -107,7 +120,10 @@ class Dcmweb:
             ids, output, type), self.multithreading)
 
     def delete(self, path):
-        """Deletes the given study, series or instance from the server."""
+        """Deletes the given study, series or instance from the server.
+        :param path: Positional argument, specifies a path (studies/[<uid>/series/\
+[<uid>/instances/]]) to delete.
+        """
         try:
             self.requests.delete_dicom(path)
         except requests_util.NetworkError as exception:
@@ -140,8 +156,10 @@ class Dcmweb:
         try:
             self.requests.request("studies", "limit=1", {})
         except requests_util.NetworkError as exception:
-            logging.error('host %s is inaccessible: %s', self.requests.host, exception)
+            logging.error('host %s is inaccessible: %s',
+                          self.requests.host, exception)
             sys.exit(1)
+
 
 class GoogleAuthenticator:
     """Handles authenticattion with Google"""
