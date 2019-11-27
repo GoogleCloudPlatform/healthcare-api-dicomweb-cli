@@ -44,11 +44,13 @@ pip3 install ./dist/*.whl
 readonly dicom_store_name="$(openssl rand -hex 12)"
 
 # Creates unique DICOM Store
-gcloud alpha healthcare dicom-stores create "${dicom_store_name}" \
+gcloud beta healthcare dicom-stores create "${dicom_store_name}" \
   --location="${LOCATION}" \
   --dataset="${DATASET}" \
   --quiet
 host="https://healthcare.googleapis.com/${STAGE}/projects/${PROJECT}/locations/${LOCATION}/datasets/${DATASET}/dicomStores/${dicom_store_name}/dicomWeb"
+
+check_exit_code $? "can't create dicom-store"
 
 dcmweb $host store ./cloudBuild/dcms/1.dcm
 single_upload_exit_code=$?
@@ -64,7 +66,7 @@ delete_exit_code=$?
 
 dcmweb $host search studies > ./cloudBuild/searchResultsAfterDelete.json
 
-gcloud alpha healthcare dicom-stores delete "${dicom_store_name}" \
+gcloud beta healthcare dicom-stores delete "${dicom_store_name}" \
   --location=$LOCATION \
   --dataset=$DATASET \
   --quiet

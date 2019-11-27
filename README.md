@@ -20,7 +20,7 @@ pip install PLACEHOLDER_AWAITING_FIRST_RELEASE
 
 * **-m**
 \
- Whether to perform batch operations in parallel or sequentially, default is in sequentially
+ Whether to perform batch operations in parallel or sequentially, default is sequentially.
 
 * **host**
 \
@@ -37,7 +37,7 @@ pip install PLACEHOLDER_AWAITING_FIRST_RELEASE
 
 * **retrieve**
 \
- Retrieves one or more studies, series, instances or frames from the server. Outputs the instances to the directory specified by the --output option.
+ Retrieves one or more studies, series, instances, or frames from the server. Outputs the instances to the directory specified by the --output option.
 
 	* --path string
 	\
@@ -62,7 +62,7 @@ pip install PLACEHOLDER_AWAITING_FIRST_RELEASE
 
 * **search**
 \
-Performs a search over studies, series or instances and outputs the result to stdout, limited to 5000 items by default. You can specify limit/offset parameters to change this.
+Performs a search over studies, series, or instances and outputs the result to stdout, limited to 5000 items by default. You can specify limit/offset parameters to change this.
 
     * --path string
 	\
@@ -74,7 +74,7 @@ Performs a search over studies, series or instances and outputs the result to st
 
 * **delete**
 \
- Deletes the given study, series or instance from the server. Uses an un-standardized extension to the DICOMweb spec.
+ Deletes the given study, series, or instance from the server. Uses an un-standardized extension to the DICOMweb spec.
 
     * --path string
     \
@@ -94,20 +94,20 @@ dcmweb $host search instances StudyDate=19941013
 dcmweb $host search 
 ```
 
-Since search returns JSON data it may be redirected into parse tools like [jq](https://stedolan.github.io/jq/)
+Since search returns JSON data it can be redirected into parse tools like [jq](https://stedolan.github.io/jq/).
 
 ```bash
 # will parse StudyUIDs/PatientNames for each study in search results
 dcmweb $host search | jq '.[] | .["0020000D"].Value[0],.["00100010"].Value[0]'
 ```
 
-Output of jq may be redirected as well
+Output of jq may be redirected as well:
 ```bash
 # will parse StudyUIDs for each study in search results
 # and count lines of jq output by wc
 dcmweb $host search | jq '.[] | .["0020000D"].Value[0]' | wc -l
 ```
-list of dicom tags may be found in this [page](https://dicom.innolitics.com/ciods/)
+The list of DICOM tags can be found in this [page](https://dicom.innolitics.com/ciods/).
 
 **store**
 
