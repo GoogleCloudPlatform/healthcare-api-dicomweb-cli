@@ -14,6 +14,8 @@ DICOMweb command line tool is a command line utility for interacting with DICOMw
 pip install PLACEHOLDER_AWAITING_FIRST_RELEASE
 ```
 
+NOTE: Getting errors due to not having Python3? See [instructions below](#running-on-machine-with-python2).
+
 ## Interface
 
 ### dcmweb [-m] \<host> \<store|retrieve|search|delete> [parameters]
@@ -180,6 +182,31 @@ tox
 ## Developing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## Running on machine with Python2
+
+This tool requires Python3 to be run which may cause issues for environments that
+have Python2 installed and can't upgrade due to other dependencies. Here are 2 options
+for getting the tool to work in this enviornment:
+
+### Using pip local install
+
+1.  Install python3 & python3-pip (e.g. `sudo apt install python3 python3-pip`)
+1.  Download zip file from latest release from
+    [GitHub](https://github.com/GoogleCloudPlatform/healthcare-api-dicomweb-cli/releases)
+1.  Run `python3 -m pip install healthcare-api-dicomweb-cli-X.Y.zip --user`
+1.  Run `export PATH=$PATH:"${HOME}/.local/bin"` -- this is where pip --user
+    installs things to
+1.  Then you should be able to run `dcmweb`
+
+### Using virtualenv
+
+1.  Install python3 & python3-venv (e.g. `sudo apt install python3 python3-venv`)
+1.  Start a virtualenv `python3 -m venv py3-env && cd py3-env && source ./bin/activate`
+1.  Download zip file from latest release from
+    [GitHub](https://github.com/GoogleCloudPlatform/healthcare-api-dicomweb-cli/releases)
+1.  Install within virtualenv`pip install healthcare-api-dicomweb-cli-X.Y.zip`
+1.  Then you should be able to run `dcmweb`
 
 ## Apache License 2.0
 Project License can be found [here](LICENSE).
