@@ -38,7 +38,7 @@ class DcmwebTests(unittest.TestCase):
     def sum_future(self, number):
         """adds number to global variable"""
         self.global_sum += number
-        return self.global_sum
+        return {"transferred": self.global_sum}
 
 
 def test_wait_for_futures_limit():
@@ -68,4 +68,4 @@ def generate_futures(function, number_of_futures):
 def sleep_future(seconds):
     """sleeps for specified amount of seconds"""
     time.sleep(seconds)
-    return seconds
+    return {"transferred": seconds}

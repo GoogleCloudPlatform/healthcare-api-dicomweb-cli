@@ -122,7 +122,9 @@ def test_upload():
         URL + "/studies",
         body=request_callback
     )
-    assert requests.upload_dicom("./cloudBuild/dcms/1.dcm") == 8706
+    assert requests.upload_dicom("./cloudBuild/dcms/1.dcm") == {'transferred': 8706,\
+'message': './cloudBuild/dcms/1.dcm uploaded as https://healthcare.googleapis.com/v1beta1/\
+projects/healthcare/locations/europe-west2/datasets/exampl/dicomStores/store/dicomWeb/studies/1'}
 
 
 def request_callback(request, uri, response_headers):
@@ -131,7 +133,10 @@ def request_callback(request, uri, response_headers):
     check.equal(content_type, 'application/dicom', 'expected application/dicom\
      but received Content-Type: {}'.format(content_type))
     check.equal(uri, URL + "/studies")
-    return [200, response_headers, ""]
+    return [200, response_headers, '<NativeDicomModel><DicomAttribute tag="00081190" vr="UR" \
+keyword="RetrieveURL"><Value number="1">https://healthcare.googleapis.com/v1beta1/projects/\
+healthcare/locations/europe-west2/datasets/exampl/dicomStores/store/dicomWeb/studies/1</Value>\
+</DicomAttribute></NativeDicomModel>']
 
 
 @httpretty.activate
@@ -191,6 +196,7 @@ def test_download_instance_json():
     data = file.read()
     assert data == "5.dcm"
 
+
 @httpretty.activate
 def test_download_dicom_by_ids():
     """should download correct file by json based dict"""
@@ -202,8 +208,8 @@ def test_download_dicom_by_ids():
             'Content-Type': 'application/dicom'}
     )
     requests = requests_util.Requests(URL, None)
-    requests.download_dicom_by_ids({'study_id': '1', 'series_id': '2', 'instance_id': '6', },\
-    "./testData", None)
+    requests.download_dicom_by_ids({'study_id': '1', 'series_id': '2', 'instance_id': '6', },
+                                   "./testData", None)
     assert os.path.isfile("./testData/1/2/6.dcm")
     file = open("./testData/1/2/6.dcm", 'r')
     data = file.read()
