@@ -44,7 +44,8 @@ def execute_file_transfer_futures(futures_arguments, multithreading):
 def wait_for_futures_limit(running_futures, transferred, limit):
     """Waits until running_futures set reaches size of limit
     :param running_futures: set of futures awaited to be done,
-                            each future should return amount of transferred bytes
+                            each future should return a dict {'transferred': <transferred bytes>,
+                            'message': <optional string to be printed>}
     :param transferred: a dict {'bytes': <amount of transferred bytes>,
                         'files': <amount of transferred files>}
     :returns: updated transferred dict
@@ -54,8 +55,13 @@ def wait_for_futures_limit(running_futures, transferred, limit):
             running_futures, timeout=1)
         for done_future in done_futures:
             try:
-                transferred['bytes'] += done_future.result()
+                future_result = done_future.result()
+                transferred['bytes'] += future_result["transferred"]
                 transferred['files'] += 1
+                message = future_result.get("message")
+                if message:
+                    logging.info(message)
+
             except requests_util.NetworkError as exception:
                 logging.error('Request failure: %s', exception)
         # extra spaces to cover previous line if it has few charates

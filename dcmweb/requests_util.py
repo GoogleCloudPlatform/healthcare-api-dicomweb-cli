@@ -6,6 +6,7 @@ import logging
 import os
 from threading import Lock
 import urllib.parse as urlparse
+import xml.etree.ElementTree as ElementTree
 import requests
 
 from . import resources
@@ -88,11 +89,13 @@ def adjust_mime_type(mime_type):
 
     return MULTIPART + '; type="{}"; '.format(mime_type) + transfer_syntax
 
+
 def build_multipart_file_name(file_name, frame_index, extension):
     """"Builds file name for different extensions and frames"""
     if extension != DCM_EXTENSION:
         file_name += "_frame_" + str(frame_index)
     return file_name + extension
+
 
 class NetworkError(Exception):
     """exception for unexpected responses"""
@@ -138,7 +141,10 @@ class Requests:
             if response.status_code != 200:
                 raise NetworkError("uploading file: {}\n response: {}".format(
                     file_name, response.text))
-            return file.tell()
+            retrieve_url = ElementTree.fromstring(response.text).find(
+                "*[@keyword='RetrieveURL']*").text
+            return {"transferred": file.tell(), "message": "{} uploaded as {}"\
+            .format(file_name, retrieve_url)}
 
     def delete_dicom(self, path):
         """ Deletes single dicom object by sending DELETE http request"""
@@ -205,7 +211,7 @@ class Requests:
 
         if not file.closed:
             file.close()
-        return transferred
+        return {"transferred": transferred}
 
     def download_dicom_by_ids(self, ids, output="./", mime_type=None):
         """Downloads instance based on ids dict object"""

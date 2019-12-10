@@ -51,4 +51,7 @@ class RequestsCounter:
         assert request.headers.get('Content-Type') == 'application/dicom'
         assert uri == "https://dicom.com/studies"
         self.requests += 1
-        return [200, response_headers, ""]
+        return [200, response_headers, '<NativeDicomModel><DicomAttribute tag="00081190" vr="UR" \
+keyword="RetrieveURL"><Value number="1">https://healthcare.googleapis.com/v1beta1/projects/\
+healthcare/locations/europe-west2/datasets/exampl/dicomStores/store/dicomWeb/studies/1</Value>\
+</DicomAttribute></NativeDicomModel>']
