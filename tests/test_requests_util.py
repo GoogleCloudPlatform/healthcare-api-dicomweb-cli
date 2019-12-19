@@ -133,10 +133,11 @@ def request_callback(request, uri, response_headers):
     check.equal(content_type, 'application/dicom', 'expected application/dicom\
      but received Content-Type: {}'.format(content_type))
     check.equal(uri, URL + "/studies")
-    return [200, response_headers, '<NativeDicomModel><DicomAttribute tag="00081190" vr="UR" \
+    return [200, response_headers, '<NativeDicomModel><DicomAttribute tag="00081199" \
+    vr="SQ" keyword="ReferencedSOPSequence"><DicomAttribute tag="00081190" vr="UR" \
 keyword="RetrieveURL"><Value number="1">https://healthcare.googleapis.com/v1beta1/projects/\
 healthcare/locations/europe-west2/datasets/exampl/dicomStores/store/dicomWeb/studies/1</Value>\
-</DicomAttribute></NativeDicomModel>']
+</DicomAttribute></DicomAttribute></NativeDicomModel>']
 
 
 @httpretty.activate
