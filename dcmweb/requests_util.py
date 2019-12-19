@@ -142,7 +142,7 @@ class Requests:
                 raise NetworkError("uploading file: {}\n response: {}".format(
                     file_name, response.text))
             retrieve_url = ElementTree.fromstring(response.text).find(
-                "*[@keyword='RetrieveURL']*").text
+                "*[@keyword='ReferencedSOPSequence']//*[@keyword='RetrieveURL']*").text
             return {"transferred": file.tell(), "message": "{} uploaded as {}"\
             .format(file_name, retrieve_url)}
 
