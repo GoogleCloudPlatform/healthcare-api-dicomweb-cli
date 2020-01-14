@@ -35,6 +35,16 @@ def test_store():
             .format(mask, "parallel" if multithreading else "sequential", amount))
             requests_counter.reset()
 
+@httpretty.activate
+def test_empty_store(caplog):
+    """error message should be printed"""
+    httpretty.register_uri(
+        httpretty.GET,
+        "https://dicom.com/studies?limit=1"
+    )
+    dcmweb_cli = dcmweb.Dcmweb("https://dicom.com/", True, None)
+    dcmweb_cli.store("/wrong/path")
+    assert caplog.records[-1].message == "No files found matching /wrong/path"
 
 class RequestsCounter:
     """Counts requests"""
