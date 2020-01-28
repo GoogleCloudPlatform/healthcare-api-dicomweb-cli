@@ -8,7 +8,7 @@ setuptools.setup(
 
     name='dcmweb',
 
-    version='0.6',
+    version='1.0',
 
     author="Google",
 
