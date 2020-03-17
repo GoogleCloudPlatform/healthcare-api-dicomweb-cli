@@ -16,6 +16,7 @@ PAGE_SIZE = 5000
 DCM_EXTENSION = ".dcm"
 JPEG_EXTENSION = ".jpg"
 PNG_EXTENSION = ".png"
+RAW_EXTENSION = ".raw"
 
 CONTENT_TYPE = "Content-Type"
 MULTIPART = "multipart/related"
@@ -61,6 +62,8 @@ def extension_by_headers(content_type):
         return JPEG_EXTENSION
     if "png" in content_type:
         return PNG_EXTENSION
+    if "application/octet-stream" in content_type:
+        return RAW_EXTENSION
 
     raise ValueError("unknown extension {}".format(content_type))
 
