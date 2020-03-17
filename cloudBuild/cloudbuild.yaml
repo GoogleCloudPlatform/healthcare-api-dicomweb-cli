@@ -2,7 +2,7 @@ steps:
 - name: "docker.io/library/python:3.6"
   args: ['bash', './cloudBuild/runTestsAndBuild.sh']
 
-- name: 'google/cloud-sdk:275.0.0'
+- name: 'google/cloud-sdk:284.0.0'
   args:
   - 'bash'
   - './cloudBuild/integrationTests.sh'
