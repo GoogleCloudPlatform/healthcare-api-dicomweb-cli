@@ -251,6 +251,8 @@ def test_extension_by_headers():
         'type="image/jpeg"'), (".jpg"))
     check.equal(requests_util.extension_by_headers(
         'multipart/related; type="image/png"'), (".png"))
+    check.equal(requests_util.extension_by_headers(
+        'multipart/related; type="application/octet-stream"'), (".raw"))
 
 
 @httpretty.activate
