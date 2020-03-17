@@ -152,5 +152,5 @@ def file_system_full_path_by_ids(ids, base_dir="./"):
 def pretty_format(body, content_type):
     """Function to format response body by content_type"""
     if content_type.lower() == DICOM_XML_CONTENT_TYPE:
-        body = xml.dom.minidom.parseString(body).toprettyxml()
+        body = xml.dom.minidom.parseString(body).toprettyxml(indent='    ')
     return body
