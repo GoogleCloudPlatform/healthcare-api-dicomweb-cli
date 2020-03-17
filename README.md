@@ -11,7 +11,7 @@ DICOMweb command line tool is a command line utility for interacting with DICOMw
 ### Using GitHub:
 
 ```bash
-pip install https://github.com/GoogleCloudPlatform/healthcare-api-dicomweb-cli/archive/v1.0.zip
+pip install https://github.com/GoogleCloudPlatform/healthcare-api-dicomweb-cli/archive/v1.01.zip
 ```
 
 NOTE: Getting errors due to not having Python3? See [instructions below](#running-on-machine-with-python2).
