@@ -46,3 +46,12 @@ def test_search():
     response3 = [{"single": "response3"}]
     assert dcmweb_cli.search() == json.dumps(
         response3, indent=INDENT, sort_keys=SORT_KEYS)
+
+    httpretty.register_uri(
+        httpretty.GET,
+        "https://dicom.com/study/1234?limit=1",
+        status=204,
+        match_querystring=True
+    )
+    assert dcmweb_cli.search("study/1234", "limit=1") == json.dumps(
+        [], indent=INDENT, sort_keys=SORT_KEYS)

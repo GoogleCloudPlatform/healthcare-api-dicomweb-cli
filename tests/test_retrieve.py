@@ -38,7 +38,7 @@ class RetrieveTests(unittest.TestCase):
         httpretty.register_uri(
             httpretty.GET,
             generate_page_url(URL, 10000),
-            body="[]",
+            status=204,
             match_querystring=True
         )
         httpretty.register_uri(
@@ -50,7 +50,7 @@ class RetrieveTests(unittest.TestCase):
         httpretty.register_uri(
             httpretty.GET,
             generate_page_url(URL+"studies/1/", 5000),
-            body="[]",
+            status=204,
             match_querystring=True
         )
         httpretty.register_uri(

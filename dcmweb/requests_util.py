@@ -126,7 +126,8 @@ class Requests:
         logging.debug('requesting %s', url)
         response = requests.get(url,
                                 headers=self.apply_credentials(headers), stream=stream)
-        if response.status_code != 200:
+        status_code = response.status_code
+        if status_code < 200 or status_code >= 300:
             raise NetworkError("Unexpected return code {}\n {}".format(
                 response.status_code, resources.pretty_format(
                     response.text, response.headers[CONTENT_TYPE])))
@@ -171,11 +172,13 @@ class Requests:
         if limit > PAGE_SIZE:
             raise ValueError("limit can\'t be more than {}".format(
                 PAGE_SIZE))
-
-        text = self.request(
+        text = "[]"
+        response = self.request(
             resources.path_from_ids(
                 ids)+"/instances", add_limit_if_not_present(parameters, limit)
-            + "&offset={}".format(limit*page), {}).text
+            + "&offset={}".format(limit*page), {})
+        if response.status_code == 200:
+            text = response.text
         return text
 
     def download_dicom(self, url, folder, file_name, mime_type):
