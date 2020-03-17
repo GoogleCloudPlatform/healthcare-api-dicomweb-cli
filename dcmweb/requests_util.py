@@ -128,7 +128,8 @@ class Requests:
                                 headers=self.apply_credentials(headers), stream=stream)
         if response.status_code != 200:
             raise NetworkError("Unexpected return code {}\n {}".format(
-                response.status_code, response.text))
+                response.status_code, resources.pretty_format(
+                    response.text, response.headers[CONTENT_TYPE])))
 
         return response
 
@@ -143,7 +144,8 @@ class Requests:
                 "studies", ""), headers=headers, data=file)
             if response.status_code != 200:
                 raise NetworkError("uploading file: {}\n response: {}".format(
-                    file_name, response.text))
+                    file_name, resources.pretty_format(
+                        response.text, response.headers[CONTENT_TYPE])))
             retrieve_url = ElementTree.fromstring(response.text).find(
                 "*[@keyword='ReferencedSOPSequence']//*[@keyword='RetrieveURL']*").text
             return {"transferred": file.tell(), "message": "{} uploaded as {}"\
@@ -156,7 +158,7 @@ class Requests:
             path, ""), headers=self.apply_credentials({}))
         if response.status_code != 200:
             raise NetworkError("sending http delete request: {}\n response: {}".format(
-                path, response.text))
+                path, resources.pretty_format(response.text, response.headers[CONTENT_TYPE])))
 
     def search_instances_by_page(self, ids, parameters, page):
         """Performs page request"""

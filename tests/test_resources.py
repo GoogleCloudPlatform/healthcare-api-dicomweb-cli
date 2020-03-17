@@ -71,3 +71,14 @@ def test_ids_from_path():
     check.equal(resources.ids_from_path(
         "study/1/series/2/instances/3/frames/4"),
                 {'study_id': '1', 'series_id': '2', 'instance_id': '3', 'frame_id': '4'})
+
+
+def test_pretty_format():
+    """should parse xml"""
+    check.equal(resources.pretty_format(
+        '<NativeDicomModel><Value number="1">redact</Value></NativeDicomModel>',
+        'application/dicom+xml'), '\
+<?xml version="1.0" ?>\n\
+<NativeDicomModel>\n\
+    <Value number="1">redact</Value>\n\
+</NativeDicomModel>\n')

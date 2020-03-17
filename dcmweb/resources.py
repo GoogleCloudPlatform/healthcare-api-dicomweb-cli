@@ -2,6 +2,7 @@
 """Module contains helper fuctions to validate and trasform dicom paths and ids
 """
 
+import xml.dom.minidom
 import validators
 
 
@@ -18,6 +19,8 @@ ID_PATH_MAP = {STUDY_ID: "studies", SERIES_ID: "series",
                INSTANCE_ID: "instances", FRAME_ID: "frames"}
 
 SPLIT_CHAR = '/'
+
+DICOM_XML_CONTENT_TYPE = "application/dicom+xml"
 
 def validate_host_str(host):
     """Function to check host url"""
@@ -145,3 +148,9 @@ def file_system_full_path_by_ids(ids, base_dir="./"):
     path = base_dir + path
     file_name = ids[INSTANCE_ID]
     return path, file_name
+
+def pretty_format(body, content_type):
+    """Function to format response body by content_type"""
+    if content_type.lower() == DICOM_XML_CONTENT_TYPE:
+        body = xml.dom.minidom.parseString(body).toprettyxml(indent='    ')
+    return body
