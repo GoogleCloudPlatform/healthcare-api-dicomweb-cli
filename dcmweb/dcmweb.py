@@ -87,8 +87,11 @@ class Dcmweb:
         """
         search_result = {}
         try:
-            search_result = json.loads(self.requests.request(
-                path, requests_util.add_limit_if_not_present(parameters), {}).text)
+            response = self.requests.request(
+                path, requests_util.add_limit_if_not_present(parameters), {})
+            search_result = []
+            if response.status_code == 200:
+                search_result = json.loads(response.text)
         except requests_util.NetworkError as exception:
             logging.error('Search failure: %s', exception)
             return "[]"
