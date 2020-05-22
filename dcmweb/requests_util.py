@@ -160,6 +160,7 @@ class Requests:
         if response.status_code != 200:
             raise NetworkError("sending http delete request: {}\n response: {}".format(
                 path, resources.pretty_format(response.text, response.headers[CONTENT_TYPE])))
+        return response.text
 
     def search_instances_by_page(self, ids, parameters, page):
         """Performs page request"""

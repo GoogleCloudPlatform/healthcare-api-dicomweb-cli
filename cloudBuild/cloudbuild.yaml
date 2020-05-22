@@ -12,7 +12,7 @@ steps:
   - '${_DATASET}'
   
 substitutions:
-  _STAGE: v1beta1
+  _STAGE: v1
   _PROJECT: gcp-healthcare-oss-test
   _LOCATION: us-central1
   _DATASET: healthcare-api-dicomweb-cli-test

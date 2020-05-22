@@ -4,7 +4,9 @@
 import logging
 import glob
 import os
+import re
 import sys
+import time
 import json
 import concurrent.futures
 import google.auth
@@ -135,9 +137,26 @@ being sent to the server.
 [<uid>/instances/]]) to delete.
         """
         try:
-            self.requests.delete_dicom(path)
+            response_text = self.requests.delete_dicom(path)
+            response_json = json.loads(response_text)
+            if "name" in response_json:
+                operation_name = response_json["name"]
+                base_url = re.match('^.+//([^/]+/){2}', self.requests.host).group()
+                requests = requests_util.Requests(base_url, self.requests.authenticator)
+                is_done = False
+                while not is_done:
+                    time.sleep(1)
+                    try:
+                        operation_json = json.loads(requests.request(operation_name,\
+                         "", {}).text)
+                        is_done = operation_json["done"]
+                    except requests_util.NetworkError:
+                        return operation_name# we assume user uses custom endpoint e.g reverse proxy
+                    logging.info('In progress\x1b[1A\x1b[\x1b[80D')
+            logging.info('Deletion is done            ')
         except requests_util.NetworkError as exception:
             logging.error('Delete failure: %s', exception)
+        return ""
 
     def _files_to_upload(self, *masks):
         """Generates set of argumets to run upload based on masks"""

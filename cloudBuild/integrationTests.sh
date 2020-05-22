@@ -62,9 +62,16 @@ dcmweb $host retrieve studies/111/series/111/instances/111
 retrieve_exit_code=$?
 
 dcmweb $host delete studies/111/series/111/instances/111
-delete_exit_code=$?
+delete_instance_exit_code=$?
 
-dcmweb $host search studies > ./cloudBuild/searchResultsAfterDelete.json
+dcmweb $host search studies > ./cloudBuild/searchResultsAfterInstanceDelete.json
+
+dcmweb $host store ./cloudBuild/dcms/1.dcm
+dcmweb $host delete studies/111
+delete_study_exit_code=$?
+
+dcmweb $host search studies > ./cloudBuild/searchResultsAfterStudyDelete.json
+
 
 gcloud beta healthcare dicom-stores delete "${dicom_store_name}" \
   --location=$LOCATION \
@@ -73,10 +80,12 @@ gcloud beta healthcare dicom-stores delete "${dicom_store_name}" \
 
 compare_files ./cloudBuild/searchResults.json ./cloudBuild/expectedSearchResults.json
 compare_files ./111/111/111.dcm ./cloudBuild/dcms/1.dcm
-compare_files ./cloudBuild/searchResultsAfterDelete.json ./cloudBuild/expectedSearchResultsAfterDelete.json
+compare_files ./cloudBuild/searchResultsAfterInstanceDelete.json ./cloudBuild/expectedSearchResultsAfterDelete.json
+compare_files ./cloudBuild/searchResultsAfterStudyDelete.json ./cloudBuild/expectedSearchResultsAfterDelete.json
 
 
 check_exit_code $single_upload_exit_code "single upload failed"
 check_exit_code $search_exit_code "search failed"
 check_exit_code $retrieve_exit_code "retrieve failed"
-check_exit_code $delete_exit_code "delete failed"
+check_exit_code $delete_instance_exit_code "instance delete failed"
+check_exit_code $delete_study_exit_code "study delete failed"
