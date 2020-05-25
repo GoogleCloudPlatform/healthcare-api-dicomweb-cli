@@ -14,7 +14,7 @@ dcmweb [-m] <host> <store|retrieve|search|delete> [parameters]\n\
 Whether to perform batch operations in parallel or sequentially, default is in sequentially\n\
 \n\
     host  \n\
-The full DICOMweb endpoint URL. E.g. `https://healthcare.googleapis.com/v1beta1/projects/<project_id>/\
+The full DICOMweb endpoint URL. E.g. `https://healthcare.googleapis.com/v1/projects/<project_id>/\
 locations/<location_id>/datasets/<dataset_id>/dicomStores/<dicom_store_id>/dicomWeb`\n\
 \n\
     store  \n\

@@ -20,7 +20,7 @@ checkFolder () {
   fi
 }
 
-pip3 install pylint 
+pip3 install pylint==2.4.4 
 pip3 install -r requirements.txt
 
 checkFolder ./dcmweb

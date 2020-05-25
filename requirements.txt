@@ -1,8 +1,8 @@
-pytest
-fire
-google.auth
-requests
-validators
-httpretty
-pytest-check
-hurry.filesize
+pytest==5.4.1
+fire==0.3.1
+google.auth==1.11.3
+requests==2.23.0
+validators==0.15.0
+httpretty==0.9.7
+pytest-check==0.3.7
+hurry.filesize==0.9

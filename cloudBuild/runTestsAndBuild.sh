@@ -15,7 +15,7 @@
 apt-get update
 apt-get -qq install python3.7 -y 
 
-pip3 install tox wheel
+pip3 install tox==3.14.5 wheel
 pip3 install -r requirements.txt
 tox
 test_result=$?
