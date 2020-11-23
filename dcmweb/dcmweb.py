@@ -149,7 +149,7 @@ being sent to the server.
                     try:
                         operation_json = json.loads(requests.request(operation_name,\
                          "", {}).text)
-                        is_done = operation_json["done"]
+                        is_done = operation_json.get("done", False)
                     except requests_util.NetworkError:
                         return operation_name# we assume user uses custom endpoint e.g reverse proxy
                     logging.info('In progress\x1b[1A\x1b[\x1b[80D')
