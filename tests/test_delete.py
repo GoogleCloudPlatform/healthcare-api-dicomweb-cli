@@ -83,7 +83,7 @@ class OperationProgress: # pylint: disable=too-few-public-methods; disabled beca
         self.requests -= 1
         resp_body = json.dumps({})
         if self.requests < 1:
-          resp_body = json.dumps({"done": True})
+            resp_body = json.dumps({"done": True})
         return [200, response_headers, resp_body]
 
 class DeleteResponse: # pylint: disable=too-few-public-methods; disabled because this is simple class for request callback
