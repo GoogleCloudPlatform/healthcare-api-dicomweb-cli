@@ -82,7 +82,7 @@ class OperationProgress: # pylint: disable=too-few-public-methods; disabled beca
         """Counts requests and returns json based on it"""
         self.requests -= 1
         resp_body = json.dumps({})
-        if self.requests < 1 :
+        if self.requests < 1:
           resp_body = json.dumps({"done": True})
         return [200, response_headers, resp_body]
 
