@@ -81,7 +81,10 @@ class OperationProgress: # pylint: disable=too-few-public-methods; disabled beca
     def request_callback(self, request, uri, response_headers): # pylint: disable=unused-argument
         """Counts requests and returns json based on it"""
         self.requests -= 1
-        return [200, response_headers, json.dumps({"done":self.requests < 1})]
+        resp_body = json.dumps({})
+        if self.requests < 1 :
+          resp_body = json.dumps({"done": True})
+        return [200, response_headers, resp_body]
 
 class DeleteResponse: # pylint: disable=too-few-public-methods; disabled because this is simple class for request callback
     """Returns body and keep flag"""
