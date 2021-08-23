@@ -218,7 +218,7 @@ class Requests:
                     file_name, frame_index, extension), 'wb')
             transferred += file.write(chunk)
 
-        if not file.closed:
+        if file and not file.closed:
             file.close()
         return {"transferred": transferred}
 
